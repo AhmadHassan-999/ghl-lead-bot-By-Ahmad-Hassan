@@ -25,8 +25,9 @@ def run_scraper():
             "language": "en",
         }
         run = apify.actor("compass/crawler-google-places").call(run_input=run_input)
+        dataset_id = run.default_dataset_id if hasattr(run, "default_dataset_id") else run["defaultDatasetId"]
 
-        for item in apify.dataset(run["defaultDatasetId"]).iterate_items():
+        for item in apify.dataset(dataset_id).iterate_items():
             phone = (item.get("phone") or "").strip()
             name = (item.get("title") or "").strip()
             website = (item.get("website") or "").strip()
