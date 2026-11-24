@@ -3,7 +3,6 @@ from datetime import datetime
 import requests
 from apify_client import ApifyClient
 
-# Har roz ke liye mukhtalif tarah ke businesses aur shehar
 DAILY_NICHE_POOL = [
     ["restaurants in Austin TX", "gyms in Dallas TX", "car dealerships in Houston TX"],
     ["beauty salons in Miami FL", "dental clinics in Tampa FL", "hotels in Orlando FL"],
@@ -27,13 +26,14 @@ def run_scraper():
     todays_queries = DAILY_NICHE_POOL[day_index]
 
     new_rows = []
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now().strftime("%d-%m-%Y")
 
     for query in todays_queries:
         run_input = {
             "searchStringsArray": [query],
             "maxCrawledPlacesPerSearch": MAX_RESULTS_PER_QUERY,
             "language": "en",
+            "scrapeContacts": True,
         }
         run = apify.actor("compass/crawler-google-places").call(run_input=run_input)
         dataset_id = run.default_dataset_id if hasattr(run, "default_dataset_id") else run["defaultDatasetId"]
@@ -44,6 +44,9 @@ def run_scraper():
             website = (item.get("website") or "").strip()
             rating = item.get("totalScore") or 0
             reviews = item.get("reviewsCount") or 0
+
+            emails_list = item.get("emails") or []
+            email = ", ".join(emails_list) if isinstance(emails_list, list) else str(emails_list)
 
             if not phone:
                 continue
@@ -59,6 +62,7 @@ def run_scraper():
                 today,
                 name,
                 phone,
+                email,
                 website,
                 rating,
                 reviews,
