@@ -3,22 +3,33 @@ from datetime import datetime
 import requests
 from apify_client import ApifyClient
 
-SEARCH_QUERIES = [
-    "gyms in Austin TX",
-    "fitness studios in Dallas TX",
-    "dental clinics in Houston TX",
+# Har roz ke liye mukhtalif tarah ke businesses aur shehar
+DAILY_NICHE_POOL = [
+    ["restaurants in Austin TX", "gyms in Dallas TX", "car dealerships in Houston TX"],
+    ["beauty salons in Miami FL", "dental clinics in Tampa FL", "hotels in Orlando FL"],
+    ["auto repair shops in Phoenix AZ", "real estate agencies in Scottsdale AZ", "pet grooming in Mesa AZ"],
+    ["law firms in Atlanta GA", "coffee shops in Charlotte NC", "event planners in Raleigh NC"],
+    ["chiropractors in Denver CO", "moving companies in Nashville TN", "spas in Las Vegas NV"],
+    ["home builders in Chicago IL", "accounting firms in Columbus OH", "cleaning services in Indianapolis IN"],
+    ["fitness studios in San Diego CA", "veterinary clinics in Sacramento CA", "clothing boutiques in San Jose CA"],
+    ["plumbers in Seattle WA", "roofers in Denver CO", "marketing agencies in Miami FL"],
+    ["insurance agencies in Dallas TX", "florists in Austin TX", "bakeries in Chicago IL"],
 ]
-MAX_RESULTS_PER_QUERY = 20
+
+MAX_RESULTS_PER_QUERY = 25
 
 
 def run_scraper():
     apify = ApifyClient(os.environ["APIFY_API_TOKEN"])
     webhook_url = os.environ["SHEET_WEBHOOK_URL"]
 
+    day_index = datetime.now().timetuple().tm_yday % len(DAILY_NICHE_POOL)
+    todays_queries = DAILY_NICHE_POOL[day_index]
+
     new_rows = []
     today = datetime.now().strftime("%Y-%m-%d")
 
-    for query in SEARCH_QUERIES:
+    for query in todays_queries:
         run_input = {
             "searchStringsArray": [query],
             "maxCrawledPlacesPerSearch": MAX_RESULTS_PER_QUERY,
@@ -39,7 +50,7 @@ def run_scraper():
 
             if not website:
                 priority = "HIGH - No Website"
-            elif rating < 4.2 or reviews < 15:
+            elif rating < 4.3 or reviews < 25:
                 priority = "HIGH - Needs Reviews/Booking"
             else:
                 priority = "MEDIUM - Standard"
